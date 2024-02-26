@@ -1,12 +1,3 @@
-# K8s Monitor 
-
-## Description
-
-Simple wrapper around `kubernetes` package to monitor the status of a k8s deployment.
-
-## Usage
-
-```python
 import numpy as np
 from kmonitor import KubeMonitor, safe_jsonify
 
@@ -38,18 +29,5 @@ if __name__ == '__main__':
   print("Checking pod status for pods {}".format(example_pod_names))
   status = km.check_pods_by_names(example_pod_names)
   print(safe_jsonify(status, indent=2))
-```
-
-## Citation
-
-If you use this code in your research, please consider citing it with the following BibTeX entry:
-
-```bibtex
-@misc{KMonitor,
-  author = {Andrei Damian},
-  title = {kmonitor - a simple K8s monitor framework},
-  year = {2023},
-  publisher = {GitHub},
-  journal = {GitHub repository}
-}
-```
+  
+  
