@@ -81,7 +81,7 @@ class KubeMonitor:
       self.P("  Running outside a Kubernetes cluster.")
     #end try
     self.__v1 = client.CoreV1Api()
-    self.P("KubeMonitor v{} initialized".format(+__version__))
+    self.P("KubeMonitor v{} initialized".format(__version__))
     return
 
 
