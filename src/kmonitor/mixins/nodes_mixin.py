@@ -17,23 +17,26 @@ class _NodesMixin:
     list
         A list of nodes and their statuses.
     """
-    node_info = []
+    node_infos = {}
     try:
-      nodes = self.v1.list_node()
+      nodes = self.api.list_node()
       for node in nodes.items:
         memory = node.status.capacity['memory']
-        cpu = node.status.capacity['cpu']
+        cpu = int(node.status.capacity['cpu'])
         memory_bytes = self.convert_memory_to_bytes(memory)
-        conditions = {condition.type: condition.status for condition in node.status.conditions}
-        node_info.append({
-          'name': node.metadata.name,
+        conditions = {
+          condition.type: condition.status for condition in node.status.conditions
+        }
+        node_infos[node.metadata.name] = {
           'status': 'Ready' if conditions.get('Ready') == 'True' else 'Not Ready',
-          'conditions': conditions
-        })
+          'conditions': conditions,
+          'memory_gib': round(memory_bytes / (1024**3), 2),
+          'cpu_cores': cpu,            
+        }
     except Exception as exc:
       self._handle_exception(exc)
-      node_info = []
-    return node_info
+      node_infos = {}
+    return node_infos
 
 
   def get_nodes_metrics(self):
@@ -45,19 +48,35 @@ class _NodesMixin:
     list
         A list of nodes with their CPU (in millicores) and memory usage (in GiB).
     """
-    node_metrics = self.custom_api.list_cluster_custom_object(
-      group="metrics.k8s.io",
-      version="v1beta1",
-      plural="nodes"
-    )
-    metrics_list = []
-    for node in node_metrics.get('items', []):
-      cpu_usage_millicores = int(node['usage']['cpu'].rstrip('n')) / 1e6  # Convert nanocores to millicores
-      memory_usage_gib = int(node['usage']['memory'].rstrip('Ki')) / (1024**2)  # Convert KiB to GiB
-      metrics_list.append({
-        'name': node['metadata']['name'],
-        'cpu_usage_cores': round(cpu_usage_millicores / 1000, 3),
-        'memory_usage_gib': round(memory_usage_gib, 2)
-      })
+    metrics_list = []    
+    nodes_capacity = self.get_all_nodes()
+    if len(nodes_capacity) > 0:
+      try:      
+        node_metrics = self.custom_api.list_cluster_custom_object(
+          group="metrics.k8s.io",
+          version="v1beta1",
+          plural="nodes"
+        )
+        metrics_list = []
+        for node in node_metrics.get('items', []):
+          node_name = node['metadata']['name']
+          cpu_usage_millicores = int(node['usage']['cpu'].rstrip('n')) / 1e6  # Convert nanocores to millicores
+          memory_usage_gib = int(node['usage']['memory'].rstrip('Ki')) / (1024**2)  # Convert KiB to GiB
+          total_memory_gib = nodes_capacity[node_name]['memory_gib']
+          total_cpu_cores = nodes_capacity[node_name]['cpu_cores']
+          metrics_list.append({
+            'name': node_name,
+            'status': nodes_capacity[node_name]['status'],
+            'conditions': nodes_capacity[node_name]['conditions'],
+            'cpu_usage_mili': int(cpu_usage_millicores),
+            'memory_usage_gib': round(memory_usage_gib, 2),
+            'total_memory_gib': total_memory_gib,
+            'total_cpu_cores': total_cpu_cores,
+            'memory_load': '{:.1f}%'.format(round((memory_usage_gib / total_memory_gib) * 100, 2)),
+            'cpu_load': '{:.1f}%'.format(round((cpu_usage_millicores / (total_cpu_cores * 1000)) * 100, 2)),
+          })
+      except Exception as exc:
+        self._handle_exception(exc)
+        metrics_list = []
     return metrics_list  
 

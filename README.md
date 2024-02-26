@@ -50,6 +50,6 @@ If you use this code in your research, please consider citing it with the follow
   title = {kmonitor - a simple K8s monitor framework},
   year = {2023-2024},
   publisher = {GitHub},
-  journal = {https://github.com/aidamian/kmonitor.git}
+  journal = {https://github.com/aidamian/k8s_monitor.git}
 }
 ```
