@@ -48,8 +48,8 @@ If you use this code in your research, please consider citing it with the follow
 @misc{KMonitor,
   author = {Andrei Damian},
   title = {kmonitor - a simple K8s monitor framework},
-  year = {2023},
+  year = {2023-2024},
   publisher = {GitHub},
-  journal = {GitHub repository}
+  journal = {https://github.com/aidamian/kmonitor.git}
 }
 ```
