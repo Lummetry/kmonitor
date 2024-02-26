@@ -13,6 +13,9 @@ except ImportError:
   KUBERNETES_PACKAGE_VERSION = None
 #end try
 
+
+from ._ver import __VER__ as __version__
+
 class KCt:
   MAX_PENDING_TIME = 300
   MIN_RUNNING_TIME = 3600
@@ -63,21 +66,22 @@ class KubeMonitor:
       msg = "Kubernetes package not found. Please install it using 'pip install kubernetes'"
       raise ValueError(msg)
     else:
-      self.P("Initializing {} using kubernetes v{}".format(
-        self.__class__.__name__, KUBERNETES_PACKAGE_VERSION,
+      self.P("Initializing {} v{} using kubernetes v{}".format(
+        self.__class__.__name__, __version__,
+        KUBERNETES_PACKAGE_VERSION,
       ))
     try:
       # Try to load in-cluster config first
       config.load_incluster_config()
       self.in_cluster = True
-      self.P("Running inside a Kubernetes cluster.")
+      self.P("  Running inside a Kubernetes cluster.")
     except config.ConfigException:
       # Fall back to kubeconfig (outside of cluster)
       config.load_kube_config()
-      self.P("Running outside a Kubernetes cluster.")
+      self.P("  Running outside a Kubernetes cluster.")
     #end try
     self.__v1 = client.CoreV1Api()
-    self.P("KubeMonitor initialized")
+    self.P("KubeMonitor v{} initialized".format(+__version__))
     return
 
 
