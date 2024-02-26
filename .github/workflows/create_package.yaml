@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade build twine
       - name: Bump version
-        run: python kmonitor/_ver.py
+        run: python src/kmonitor/_ver.py
       - name: Build package
         run: >-
           python -m
