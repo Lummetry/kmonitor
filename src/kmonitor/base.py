@@ -95,17 +95,19 @@ class KubeMonitor(
 
   def _handle_exception(self, exc):
     error_message = f"Exception when calling Kubernetes API:\n"
-    error_message += f"  Reason: {exc.reason}\n"
-    error_message += f"  Status: {exc.status}\n"
-    
-    # Attempting to parse the body as JSON to extract detailed API response
-    if exc.body:
-      try:
+    try:
+      error_message += f"  Reason: {exc.reason}\n"
+      error_message += f"  Status: {exc.status}\n"    
+      # Attempting to parse the body as JSON to extract detailed API response
+      if exc.body:
         body = json.loads(exc.body)
         message = body.get("message")
         error_message += f"  Message: {message}\n"
-      except json.JSONDecodeError:
-        error_message += f"  Raw Body: {exc.body}\n"
+    except:
+      if hasattr(exc, "body"):
+        error_message += f"  Raw body: {exc.body}\n"
+      else:
+        error_message += f"  Raw exception: {exc}\n"
       #end try
     #end if  
     self.P(error_message)    
