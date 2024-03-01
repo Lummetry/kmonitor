@@ -94,7 +94,7 @@ class KubeMonitor(
     return self.__custom_api
 
   def _handle_exception(self, exc):
-    error_message = f"Exception when calling Kubernetes API:\n"
+    error_message = f"KMonitor v{__version__} exception:\n"
     try:
       error_message += f"  Reason: {exc.reason}\n"
       error_message += f"  Status: {exc.status}\n"    

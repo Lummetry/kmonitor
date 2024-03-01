@@ -61,7 +61,8 @@ class _NodesMixin:
         for node in node_metrics.get('items', []):
           node_name = node['metadata']['name']
           cpu_usage_millicores = int(node['usage']['cpu'].rstrip('n')) / 1e6  # Convert nanocores to millicores
-          memory_usage_gib = int(node['usage']['memory'].rstrip('Ki')) / (1024**2)  # Convert KiB to GiB
+          str_mem = node['usage']['memory'].rstrip('Ki').replace('M','')
+          memory_usage_gib = int(str_mem) / (1024**2)  # Convert KiB to GiB
           total_memory_gib = nodes_capacity[node_name]['memory_gib']
           total_cpu_cores = nodes_capacity[node_name]['cpu_cores']
           metrics_list.append({
