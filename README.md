@@ -4,6 +4,12 @@
 
 Simple wrapper around `kubernetes` package to monitor the status of a k8s deployment.
 
+## Installation
+
+```bash
+pip install kmonitor --upgrade
+```
+
 ## Usage
 
 ```python
