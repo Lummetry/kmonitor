@@ -121,13 +121,18 @@ class KubeMonitor(
     return (datetime.now(start_time.tzinfo) - start_time).total_seconds()
 
     
-  def __list_namespaces(self):
+  def __list_namespaces(self, return_names=False):
+    result = []
     try:
       ret = self.api.list_namespace(watch=False)
+      if return_names:
+        result = [x.metadata.name for x in ret.items]
+      else:
+        result = ret.items
     except Exception as exc:
       self._handle_exception(exc)
       return None
-    return ret.items
+    return result
 
 
   ################################################################################################
@@ -171,7 +176,7 @@ class KubeMonitor(
     Get a summary of the Kubernetes cluster.
     """
     summary = OrderedDict()
-    summary['namespaces'] = self.get_namespaces()
+    summary['namespaces'] = self.get_namespaces(return_names=True)
     nodes = self.get_nodes_metrics()
     summary['nodes'] = {x['name']: x for x in nodes}
     summary['pods'] = self.get_all_pods_health()
