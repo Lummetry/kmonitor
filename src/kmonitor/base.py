@@ -158,11 +158,11 @@ class KubeMonitor(
     return result
 
 
-  def get_namespaces(self):
+  def get_namespaces(self, return_names=False):
     """
     Get all namespaces.
     """
-    lst_namespaces = self.__list_namespaces()
+    lst_namespaces = self.__list_namespaces(return_names=return_names)
     return lst_namespaces
 
 
