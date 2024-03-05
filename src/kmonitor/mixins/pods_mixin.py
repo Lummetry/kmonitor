@@ -15,7 +15,29 @@ class _PodsMixin:
     transition_time = self._get_elapsed(start_time)
     return transition_time
   
-
+ 
+  
+  def __get_pod_status(self, pod_name, namespace):
+    try:
+      pod = self.api.read_namespaced_pod(name=pod_name, namespace=namespace)
+    except Exception as exc:
+      self._handle_exception(exc)
+      return None
+    return self._check_pod_health(pod)
+  
+  
+  def __list_pods(self, namespace=None):
+    try:
+      if namespace is None:
+        ret = self.api.list_pod_for_all_namespaces(watch=False)
+      else:
+        ret = self.api.list_namespaced_pod(namespace, watch=False)
+    except Exception as exc:
+      self._handle_exception(exc)
+      return None
+    return ret.items
+  
+  
   def _check_pod_health(self, pod):
     try:
       # Fetch the specified pod      
@@ -89,28 +111,7 @@ class _PodsMixin:
       self.P(f"An error occurred: {e}")
       health_status = {"status": "Error", "messages": [str(e)]}
     #end try
-    return health_status
-  
-  
-  def __get_pod_status(self, pod_name, namespace):
-    try:
-      pod = self.api.read_namespaced_pod(name=pod_name, namespace=namespace)
-    except Exception as exc:
-      self._handle_exception(exc)
-      return None
-    return self._check_pod_health(pod)
-  
-  
-  def __list_pods(self, namespace=None):
-    try:
-      if namespace is None:
-        ret = self.api.list_pod_for_all_namespaces(watch=False)
-      else:
-        ret = self.api.list_namespaced_pod(namespace, watch=False)
-    except Exception as exc:
-      self._handle_exception(exc)
-      return None
-    return ret.items
+    return health_status  
   
   
 ################################################################################################
@@ -211,4 +212,15 @@ class _PodsMixin:
     lst_pods = self.__list_pods(namespace=namespace)
     return lst_pods
   
+  
+  def get_all_pods_health(self):
+    """
+    Get the health status of all pods in all namespaces.
+    """
+    lst_pods = self.get_all_pods()
+    result = []
+    for pod in lst_pods:
+      status = self._check_pod_health(pod)
+      result.append(status)
+    return result
       

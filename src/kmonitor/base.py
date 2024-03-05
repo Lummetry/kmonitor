@@ -33,9 +33,9 @@ class KubeMonitor(
     return
 
 
-  def P(self, s, **kwargs):
+  def P(self, s, color=None, **kwargs):
     if self.log is not None:
-      self.log.P(s, **kwargs)
+      self.log.P(s, color=color, **kwargs)
     else:
       print(s, flush=True, **kwargs)
     return
@@ -108,9 +108,9 @@ class KubeMonitor(
         error_message += f"  Raw body: {exc.body}\n"
       else:
         error_message += f"  Raw exception: {exc}\n"
-      #end try
-    #end if  
-    self.P(error_message)    
+      #end if  
+    #end try
+    self.P(error_message, color='r')    
     return
 
 
@@ -164,4 +164,16 @@ class KubeMonitor(
   def list_namespaces(self):
     """Get all namespaces."""
     return self.get_namespaces()
+  
+  
+  def summary(self):
+    """
+    Get a summary of the Kubernetes cluster.
+    """
+    summary = OrderedDict()
+    summary['namespaces'] = self.get_namespaces()
+    nodes = self.get_nodes_metrics()
+    summary['nodes'] = {x['name']: x for x in nodes}
+    summary['pods'] = self.get_all_pods_health()
+    return summary
 
