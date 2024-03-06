@@ -22,7 +22,8 @@ class _NodesMixin:
       nodes = self.api.list_node()
       for node in nodes.items:
         memory = node.status.capacity['memory']
-        cpu = int(node.status.capacity['cpu'])
+        str_cpu = self.to_number_str(node.status.capacity['cpu'])
+        cpu = int(str_cpu)
         memory_bytes = self.convert_memory_to_bytes(memory)
         conditions = {
           condition.type: condition.status for condition in node.status.conditions
@@ -60,8 +61,9 @@ class _NodesMixin:
         metrics_list = []
         for node in node_metrics.get('items', []):
           node_name = node['metadata']['name']
-          cpu_usage_millicores = int(node['usage']['cpu'].rstrip('n')) / 1e6  # Convert nanocores to millicores
-          str_mem = node['usage']['memory'].rstrip('Ki').replace('M','')
+          str_cpu = self.to_number_str(node['usage']['cpu'])
+          str_mem = self.to_number_str(node['usage']['memory'])
+          cpu_usage_millicores = int(str_cpu) / 1e6  # Convert nanocores to millicores
           memory_usage_gib = int(str_mem) / (1024**2)  # Convert KiB to GiB
           total_memory_gib = nodes_capacity[node_name]['memory_gib']
           total_cpu_cores = nodes_capacity[node_name]['cpu_cores']

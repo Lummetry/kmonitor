@@ -1,5 +1,8 @@
 import json
 
+import traceback
+import re
+
 from datetime import datetime
 from collections import OrderedDict
 
@@ -57,9 +60,27 @@ class KubeMonitor(
     """
     units = {"Ki": 1024, "Mi": 1024**2, "Gi": 1024**3, "Ti": 1024**4, "Pi": 1024**5, "Ei": 1024**6}
     unit = memory_str[-2:]
-    number = float(memory_str[:-2])
-    return int(number * units[unit])  
+    str_number = KubeMonitor.to_number_str(memory_str)
+    number = float(str_number)
+    scale = units.get(unit, 1)
+    return int(number * scale)  
+  
+  @staticmethod
+  def to_number_str(str_value):
+    """
+    Convert a string to a number (str) - stripping all literals.
 
+    Parameters
+    ----------
+    str_value : str
+        The string to convert.
+
+    Returns
+    -------
+    str
+        The converted string.
+    """
+    return re.sub("[^0-9.]", "", str_value)
 
   def __initialize(self):
     if KUBERNETES_PACKAGE_VERSION is None:
@@ -94,6 +115,7 @@ class KubeMonitor(
     return self.__custom_api
 
   def _handle_exception(self, exc):
+    trace = traceback.format_exc()
     error_message = f"KMonitor v{__version__} exception:\n"
     try:
       error_message += f"  Reason: {exc.reason}\n"
@@ -110,6 +132,7 @@ class KubeMonitor(
         error_message += f"  Raw exception: {exc}\n"
       #end if  
     #end try
+    error_message += f"  Traceback:\n{trace}"
     self.P(error_message, color='r')    
     return
 
