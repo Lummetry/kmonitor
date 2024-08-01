@@ -114,6 +114,21 @@ class _PodsMixin:
     return health_status  
   
   
+  def __get_pod_by_name(self, pod_name):
+    assert isinstance(pod_name, str), "`pod_name` must be a string"
+    
+    pods = self.list_pods()
+    if pods is None:
+      health_status = {"status": "Error", "messages": ["Unable to get pods"]}
+    else:      
+      found = None
+      for p in pods:
+        if p.metadata.name.startswith(pod_name):
+          found = p
+          break        
+    return found
+  
+  
 ################################################################################################
 # Public methods
 ################################################################################################
@@ -151,23 +166,13 @@ class _PodsMixin:
     -------
       dict
     """
-    assert isinstance(pod_name, str), "`pod_name` must be a string"
     
-    pods = self.list_pods()
-    if pods is None:
-      health_status = {"status": "Error", "messages": ["Unable to get pods"]}
-    else:      
-      found = None
-      for p in pods:
-        if p.metadata.name.startswith(pod_name):
-          found = p
-          break        
-      if found is None:
-        health_status = {"status": "Error", "messages": [f"Pod '{pod_name}' not found"]}
-      else:
-        health_status = self._check_pod_health(found)
+    found_pod = self.__get_pod_by_name(pod_name)
+    if found_pod is None:
+      health_status = {"status": "Error", "messages": [f"Pod '{pod_name}' not found"]}
+    else:
+      health_status = self._check_pod_health(found_pod)
       #end if found
-    #end if pods listed
     return health_status
   
   
@@ -223,4 +228,39 @@ class _PodsMixin:
       status = self._check_pod_health(pod)
       result.append(status)
     return result
+  
+  
+  def delete_pods_from_namespace(self, base_name : str, namespace : str):
+    """
+    Delete all pods in a namespace that start with a specific name.
+    
+    Parameters
+    ----------
+    base_name : str
+        The base name of the pods to delete.
+    namespace : str
+        The namespace where the pods are located.
+    """
+    assert isinstance(base_name, str), "`base_name` must be a string"
+    assert isinstance(namespace, str), "`namespace` must be a string"
+    
+    pods = self.get_pods_by_namespace(namespace)
+    if pods is None:
+      self.P("No pods found in namespace {}".format(namespace)) 
+      return
+    #end if pods is None
+    for pod in pods:
+      if pod.metadata.name.startswith(base_name):
+        self.P(f"Deleting pod {pod.metadata.name} in namespace {namespace}")
+        res = self.api.delete_namespaced_pod(name=pod.metadata.name, namespace=namespace)
+        if res is not None:
+          creation_date = res.metadata.creation_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+          delete_date = res.metadata.deletion_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+          delta = res.metadata.deletion_timestamp - res.metadata.creation_timestamp
+          lifetime_sec = (delta).total_seconds()
+          elapsed_time = str(delta)
+          msg = f"Pod {pod.metadata.name} deleted. Created: {creation_date}, Deleted: {delete_date}, Lifetime: {elapsed_time}."
+          self.P(msg)
+    #end for pod
+    return
       

@@ -1,5 +1,9 @@
 import numpy as np
-from kmonitor import KubeMonitor, safe_jsonify
+try:
+  from src.kmonitor import KubeMonitor, safe_jsonify
+except:
+  from kmonitor import KubeMonitor, safe_jsonify
+# end try imports from local project or from deployed package
 
 
 if __name__ == '__main__':
@@ -25,9 +29,15 @@ if __name__ == '__main__':
   status = km.check_pod_by_name(example_pod_name)
   print(safe_jsonify(status, indent=2))
 
-  example_pod_names = ["nvidia", "calico-node", "emqx"]
+  example_pod_names = [
+    # "nvidia", 
+    "calico-node", 
+    "emqx"
+  ]
   print("Checking pod status for pods {}".format(example_pod_names))
   status = km.check_pods_by_names(example_pod_names)
   print(safe_jsonify(status, indent=2))
   
+  
+  km.delete_pods_from_namespace("redis", "hyfy")
   
