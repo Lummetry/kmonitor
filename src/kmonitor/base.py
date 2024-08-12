@@ -194,7 +194,7 @@ class KubeMonitor(
     return self.get_namespaces()
   
   
-  def summary(self):
+  def summary(self, namespace=None):
     """
     Get a summary of the Kubernetes cluster.
     """
@@ -202,6 +202,6 @@ class KubeMonitor(
     summary['namespaces'] = self.get_namespaces(return_names=True)
     nodes = self.get_nodes_metrics()
     summary['nodes'] = {x['name']: x for x in nodes}
-    summary['pods'] = self.get_all_pods_health()
+    summary['pods'] = self.get_all_pods_health(namespace=namespace)
     return summary
 

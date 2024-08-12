@@ -31,13 +31,22 @@ if __name__ == '__main__':
 
   example_pod_names = [
     # "nvidia", 
-    "calico-node", 
-    "emqx"
+    # "calico-node", 
+    # "emqx",
+    "redis",
+    "ee-super"
   ]
   print("Checking pod status for pods {}".format(example_pod_names))
   status = km.check_pods_by_names(example_pod_names)
   print(safe_jsonify(status, indent=2))
   
   
-  km.delete_pods_from_namespace("redis", "hyfy")
+  # km.delete_pods_from_namespace("redis", "hyfy")
+  
+
+  namespace = "hyfy"
+  lst_pods = km.get_all_pods(namespace=namespace)
+  print(f"Found {len(lst_pods)} pods in namespace {namespace}")
+  
+  print(lst_pods[0].metadata.namespace)
   
