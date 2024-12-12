@@ -37,6 +37,7 @@ class KubeMonitor(
 
 
   def P(self, s, color=None, **kwargs):
+    s = "[K8sMonitor] " + s
     if self.log is not None:
       self.log.P(s, color=color, **kwargs)
     else:

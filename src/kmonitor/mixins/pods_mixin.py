@@ -1,3 +1,5 @@
+import json
+
 from collections import OrderedDict
 
 
@@ -119,8 +121,11 @@ class _PodsMixin:
         #end for container status
       #end if pod is running
     except Exception as e:
-      self.P(f"An error occurred: {e}")
-      health_status = {POD_STATUS.KEY_STATUS: "Error", POD_STATUS.KEY_MESSAGES: [str(e)]}
+      health_status = {
+        **health_status,
+        POD_STATUS.KEY_STATUS: "Error", POD_STATUS.KEY_MESSAGES: [str(e)]
+      }
+      self.P(f"An error occurred: {e}", color='r') # if you want to see datils check in the payloads
     #end try
     return health_status  
   
