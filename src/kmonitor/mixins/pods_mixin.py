@@ -91,41 +91,54 @@ class _PodsMixin:
       # Check container statuses if pod phase is Running
       if pod.status.phase == POD_STATUS.STATUS_RUNNING:
         health_status[POD_STATUS.KEY_CONTAINERS] = {}
+        exceptions = []
+        # TODO: have a pod_status variable that will be the worst status of the containers
+        #   Obs: in general, the pod only has one container, but it can have more than one and they can have different statuses.
+        #   If so, currently the final pod status is the status of the last container, as opposed to the worst status of all containers.
         for container_status in pod.status.container_statuses or []:
-          container_name = container_status.name
           dct_container = {}
-          # Check if container is ready 
-          if not container_status.ready:
-            health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.WARNING
-            health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} is not ready.")
-          # Check if container has restarted
-          if container_status.restart_count > 0:
-            health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.WARNING
-            health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} restarted {container_status.restart_count} times.")
-          # now compute running time for this pod containers                   
-          run_info = container_status.state.running                  
-          running_time = self._get_elapsed(run_info.started_at)
-          hours, rem = divmod(running_time, 3600)
-          minutes, seconds = divmod(rem, 60)
-          # format elapsed time as a string        
-          dct_container[POD_STATUS.KEY_STARTED] = run_info.started_at.strftime("%Y-%m-%d %H:%M:%S")
-          dct_container[POD_STATUS.KEY_RUNNING] = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
-          if running_time < KCt.MIN_RUNNING_TIME:
-            health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.LOW_WARNING
-            health_status[POD_STATUS.KEY_MESSAGES].append(f"Low running time: Container {container_status.name} run-time {dct_container['running_time']}.")
-          else:
-            health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.OK
-            health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} run-time {dct_container['running_time']}.")  
-          #end if running time
+          container_name = None
+          try:
+            dct_container = {}
+            container_name = container_status.name
+            # Check if container is ready
+            if not container_status.ready:
+              health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.WARNING
+              health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} is not ready.")
+            # Check if container has restarted
+            if container_status.restart_count > 0:
+              health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.WARNING
+              health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} restarted {container_status.restart_count} times.")
+            # now compute running time for this pod containers
+            run_info = container_status.state.running
+            running_time = self._get_elapsed(run_info.started_at)
+            hours, rem = divmod(running_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            # format elapsed time as a string
+            dct_container[POD_STATUS.KEY_STARTED] = run_info.started_at.strftime("%Y-%m-%d %H:%M:%S")
+            dct_container[POD_STATUS.KEY_RUNNING] = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
+            if running_time < KCt.MIN_RUNNING_TIME:
+              health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.LOW_WARNING
+              health_status[POD_STATUS.KEY_MESSAGES].append(f"Low running time: Container {container_status.name} run-time {dct_container[POD_STATUS.KEY_RUNNING]}.")
+            else:
+              health_status[POD_STATUS.KEY_STATUS] = POD_STATUS.OK
+              health_status[POD_STATUS.KEY_MESSAGES].append(f"Container {container_status.name} run-time {dct_container[POD_STATUS.KEY_RUNNING]}.")
+            #end if running time
+
+          except Exception as e:
+            exceptions.append(str(e))
+          #end try
           health_status[POD_STATUS.KEY_CONTAINERS][container_name] = dct_container
         #end for container status
+        if len(exceptions) > 0:
+          health_status[POD_STATUS.KEY_MESSAGES].extend(exceptions)
       #end if pod is running
     except Exception as e:
       health_status = {
         **health_status,
         POD_STATUS.KEY_STATUS: "Error", POD_STATUS.KEY_MESSAGES: [str(e)]
       }
-      self.P(f"An error occurred: {e}", color='r') # if you want to see datils check in the payloads
+      # self.P(f"An error occurred: {e}", color='r') # if you want to see datils check in the payloads
     #end try
     return health_status  
   
